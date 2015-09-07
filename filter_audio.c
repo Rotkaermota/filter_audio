@@ -249,11 +249,12 @@ int pass_audio_output(Filter_Audio *f_a, const int16_t *data, unsigned int sampl
 
     unsigned int temp_samples = samples;
 
+    float *d_f = (float *)_alloca( nsx_samples * sizeof(float) + nsx_samples * sizeof(int16_t) );
+
     while (temp_samples) {
-        float d_f[nsx_samples];
 
         if (resample) {
-            int16_t d[nsx_samples];
+            int16_t *d = (int16_t *)(d_f + nsx_samples);
             downsample_audio_echo_in(f_a, d, data + resampled_samples);
 
             if (WebRtcAgc_AddFarend(f_a->gain_control, d, nsx_samples) == -1)
@@ -312,16 +313,20 @@ int filter_audio(Filter_Audio *f_a, int16_t *data, unsigned int samples)
     unsigned int smp = f_a->fs / 100;
     int novoice = 1;
 
+    int16_t *d_l = (int16_t *)_alloca(nsx_samples * (2 * sizeof(int16_t) + 2 * sizeof(float)) + smp * sizeof(float));
+    int16_t *temp = d_l + nsx_samples;
+    float *d_f_l = (float *)(temp + nsx_samples);
+    float *d_f_h = d_f_l + nsx_samples;
+    float *d_f_u = d_f_h + nsx_samples;
+
     while (temp_samples) {
-        int16_t d_l[nsx_samples];
         int16_t *d_h = NULL;
-        int16_t temp[nsx_samples];
-        memset(temp, 0, nsx_samples*sizeof(float));
+        memset(temp, 0, nsx_samples*sizeof(int16_t));
         if (resample) {
             d_h = temp;
             downsample_audio(f_a, d_l, d_h, data + resampled_samples, smp);
         } else {
-            memcpy(d_l, data + (samples - temp_samples), sizeof(d_l));
+            memcpy(d_l, data + (samples - temp_samples), nsx_samples * sizeof(int16_t));
         }
 
         if(f_a->vad_enabled){
@@ -339,10 +344,7 @@ int filter_audio(Filter_Audio *f_a, int16_t *data, unsigned int samples)
                 return -1;
         }
 
-        float d_f_l[nsx_samples];
         S16ToFloatS16(d_l, nsx_samples, d_f_l);
-
-        float d_f_h[nsx_samples];
         memset(d_f_h, 0, nsx_samples*sizeof(float));
 
 	if (resample) {
@@ -376,7 +378,6 @@ int filter_audio(Filter_Audio *f_a, int16_t *data, unsigned int samples)
         }
 
         if (resample) {
-            float d_f_u[smp];
             upsample_audio(f_a, data + resampled_samples, smp, d_l, d_h, nsx_samples);
             S16ToFloat(data + resampled_samples, smp, d_f_u);
             run_filter_zam(&f_a->hpfa, d_f_u, smp);
@@ -404,7 +405,7 @@ int filter_audio(Filter_Audio *f_a, int16_t *data, unsigned int samples)
             run_saturator_zam(d_f_l, nsx_samples);
 
             FloatToS16(d_f_l, nsx_samples, d_l);
-            memcpy(data + (samples - temp_samples), d_l, sizeof(d_l));
+            memcpy(data + (samples - temp_samples), d_l, nsx_samples * sizeof(int16_t));
         }
 
         temp_samples -= nsx_samples;

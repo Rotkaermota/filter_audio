@@ -8,6 +8,10 @@
 typedef struct Filter_Audio Filter_Audio;
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 Filter_Audio *new_filter_audio(uint32_t fs);
 
@@ -26,4 +30,10 @@ int pass_audio_output(Filter_Audio *f_a, const int16_t *data, unsigned int sampl
 
 /* Tell the echo canceller how much time in ms it takes for audio to be played and recorded back after. */
 int set_echo_delay_ms(Filter_Audio *f_a, int16_t msInSndCardBuf);
+
+#ifdef __cplusplus
+}
+#endif
+
+
 #endif
