@@ -36,8 +36,16 @@
 
 #include <xmmintrin.h>
 
+#ifdef _MSC_VER
+#define inlinex __forceinline
+#endif
+#ifdef __GNUC__
+#define inlinex inline
+#endif
+
+
 #define OVERRIDE_INNER_PRODUCT_SINGLE
-static __forceinline float inner_product_single(const float *a, const float *b, unsigned int len)
+static inlinex float inner_product_single(const float *a, const float *b, unsigned int len)
 {
    int i;
    float ret;
@@ -54,7 +62,7 @@ static __forceinline float inner_product_single(const float *a, const float *b, 
 }
 
 #define OVERRIDE_INTERPOLATE_PRODUCT_SINGLE
-static __forceinline float interpolate_product_single(const float *a, const float *b, unsigned int len, const spx_uint32_t oversample, float *frac) {
+static inlinex float interpolate_product_single(const float *a, const float *b, unsigned int len, const spx_uint32_t oversample, float *frac) {
   int i;
   float ret;
   __m128 sum = _mm_setzero_ps();

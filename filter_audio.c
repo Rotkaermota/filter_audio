@@ -10,6 +10,13 @@
 #include "other/speex_resampler.h"
 #include "zam/filters.h"
 
+#ifdef _MSC_VER
+#define STACK_ALLOC _alloca
+#endif
+#ifdef __GNUC__
+#include <alloca.h>
+#define STACK_ALLOC alloca
+#endif
 
 
 typedef struct {
@@ -249,7 +256,7 @@ int pass_audio_output(Filter_Audio *f_a, const int16_t *data, unsigned int sampl
 
     unsigned int temp_samples = samples;
 
-    float *d_f = (float *)_alloca( nsx_samples * sizeof(float) + nsx_samples * sizeof(int16_t) );
+    float *d_f = (float *)STACK_ALLOC( nsx_samples * sizeof(float) + nsx_samples * sizeof(int16_t) );
 
     while (temp_samples) {
 
@@ -313,7 +320,7 @@ int filter_audio(Filter_Audio *f_a, int16_t *data, unsigned int samples)
     unsigned int smp = f_a->fs / 100;
     int novoice = 1;
 
-    int16_t *d_l = (int16_t *)_alloca(nsx_samples * (2 * sizeof(int16_t) + 2 * sizeof(float)) + smp * sizeof(float));
+    int16_t *d_l = (int16_t *)STACK_ALLOC(nsx_samples * (2 * sizeof(int16_t) + 2 * sizeof(float)) + smp * sizeof(float));
     int16_t *temp = d_l + nsx_samples;
     float *d_f_l = (float *)(temp + nsx_samples);
     float *d_f_h = d_f_l + nsx_samples;
